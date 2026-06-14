@@ -1,2 +1,0 @@
-# bigauction
-an auction company

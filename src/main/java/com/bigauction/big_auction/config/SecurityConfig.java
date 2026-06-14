@@ -57,7 +57,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/uploads/**").permitAll()  // Uploaded product images
                         .requestMatchers("/ws/**").permitAll()  // WebSocket handshake
-                        .anyRequest().authenticated()
+                        .requestMatchers("/api/**").authenticated()  // any other API needs auth
+                        .anyRequest().permitAll()  // React build (index.html, /assets/**) + SPA routes
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))

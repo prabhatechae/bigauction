@@ -43,7 +43,7 @@ public class UploadController {
             Path destination = uploadPath.resolve(filename);
             file.transferTo(destination);
 
-            String url = "http://localhost:8080/uploads/" + filename;
+            String url = "/uploads/" + filename;
             return ApiResponse.ok("Image uploaded", url);
         } catch (IOException e) {
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to save image");

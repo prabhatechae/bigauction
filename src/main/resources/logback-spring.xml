@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Spring Boot's sensible console defaults (colors, pattern). Keeps journald output intact. -->
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!--
+        Log directory. Defaults to "logs" relative to the working directory.
+        In production the systemd WorkingDirectory is /opt/bigauction, so files
+        land in /opt/bigauction/logs/. Override with the LOG_DIR env var if desired.
+    -->
+    <property name="LOG_DIR" value="${LOG_DIR:-logs}"/>
+    <property name="LOG_FILE" value="${LOG_DIR}/big-auction.log"/>
+
+    <!-- Rolling file appender: rotate daily AND when a file exceeds 10MB. -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE}</file>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n</pattern>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/big-auction.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>30</maxHistory>        <!-- keep 30 days of archives -->
+            <totalSizeCap>1GB</totalSizeCap>   <!-- hard cap on total archive size -->
+        </rollingPolicy>
+    </appender>
+
+    <!-- Application logging level. Override per-environment with the LOG_LEVEL env var. -->
+    <root level="${LOG_LEVEL:-INFO}">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+
+    <!-- Keep our own packages at INFO; bump to DEBUG via LOG_LEVEL_APP when investigating. -->
+    <logger name="com.bigauction.big_auction" level="${LOG_LEVEL_APP:-INFO}"/>
+
+</configuration>

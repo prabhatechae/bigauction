@@ -38,6 +38,9 @@ build/
 ### Uploads (local files) ###
 uploads/
 
+### Logs ###
+logs/
+
 ### Claude ###
 .claude/
 

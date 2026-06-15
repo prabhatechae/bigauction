@@ -47,6 +47,11 @@ public class BidService {
             throw new AppException(HttpStatus.BAD_REQUEST,
                     "Minimum bid is " + currency + " " + minBid.toPlainString());
         }
+        if (auction.getMaxBidAmount() != null
+                && request.getAmount().compareTo(auction.getMaxBidAmount()) > 0) {
+            throw new AppException(HttpStatus.BAD_REQUEST,
+                    "Bid exceeds the maximum allowed amount of " + currency + " " + auction.getMaxBidAmount().toPlainString());
+        }
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));

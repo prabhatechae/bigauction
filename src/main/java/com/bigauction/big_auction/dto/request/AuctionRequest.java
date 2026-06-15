@@ -44,4 +44,5 @@ public class AuctionRequest {
     private BigDecimal estimateHigh;
     private BigDecimal reservePrice;
     private BigDecimal bidIncrement;
+    private BigDecimal maxBidAmount;
 }

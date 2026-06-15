@@ -31,6 +31,7 @@ public class AuctionResponse {
     private BigDecimal estimateHigh;
     private BigDecimal reservePrice;
     private BigDecimal bidIncrement;
+    private BigDecimal maxBidAmount;
     private BigDecimal currentHighestBid;
     private int bidCount;
     private String highestBidderName;

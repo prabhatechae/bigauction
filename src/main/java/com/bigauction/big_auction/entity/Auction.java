@@ -95,6 +95,10 @@ public class Auction extends BaseEntity {
 
     // ---- Bidding ----
 
+    // Optional cap — bids above this amount are rejected
+    @Column(precision = 12, scale = 2)
+    private BigDecimal maxBidAmount;
+
     @Column(precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal currentHighestBid = BigDecimal.ZERO;

@@ -74,6 +74,7 @@ public class AuctionService {
         auction.setEstimateHigh(request.getEstimateHigh());
         auction.setReservePrice(request.getReservePrice());
         auction.setBidIncrement(request.getBidIncrement());
+        auction.setMaxBidAmount(request.getMaxBidAmount());
         auction.setCurrency(request.getCurrency() != null && !request.getCurrency().isBlank()
                 ? request.getCurrency().toUpperCase() : "AED");
 
@@ -284,6 +285,7 @@ public class AuctionService {
                 .estimateHigh(auction.getEstimateHigh())
                 .reservePrice(auction.getReservePrice())
                 .bidIncrement(auction.getBidIncrement())
+                .maxBidAmount(auction.getMaxBidAmount())
                 .currentHighestBid(auction.getCurrentHighestBid())
                 .bidCount(auction.getBidCount())
                 .highestBidderName(highestBidderName)

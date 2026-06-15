@@ -40,3 +40,6 @@ uploads/
 
 ### Claude ###
 .claude/
+
+### Local config ###
+src/main/resources/application.properties

@@ -225,6 +225,7 @@ public class ProductService {
                 .estimateHigh(auction.getEstimateHigh())
                 .reservePrice(auction.getReservePrice())
                 .bidIncrement(auction.getBidIncrement())
+                .maxBidAmount(auction.getMaxBidAmount())
                 .currentHighestBid(auction.getCurrentHighestBid())
                 .bidCount(auction.getBidCount())
                 .highestBidderName(highestBidderName)

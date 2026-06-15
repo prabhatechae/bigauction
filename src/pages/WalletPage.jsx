@@ -185,9 +185,9 @@ export default function WalletPage() {
       {/* ── Emerald Hero ── */}
       <div className="relative bg-emerald overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20">
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14 lg:py-20">
           <p className="text-ivory/60 text-xs uppercase tracking-widest mb-3">My Wallet</p>
-          <p className="text-ivory text-5xl font-bold mt-1 font-display">AED {balance.toLocaleString()}</p>
+          <p className="text-ivory text-3xl sm:text-5xl font-bold mt-1 font-display">AED {balance.toLocaleString()}</p>
           <p className="text-ivory/50 text-sm mt-3">Track your balance and transactions</p>
           <button
             onClick={() => setShowAddFunds(true)}

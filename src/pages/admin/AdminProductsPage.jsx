@@ -15,7 +15,7 @@ const EMPTY_PRODUCT = {
   includesWarrantyCard: false, includesOriginalReceipt: false,
 }
 
-const CONDITION_GRADES = ['LIKE_NEW', 'EXCELLENT', 'VERY_GOOD', 'GOOD', 'FAIR']
+const CONDITION_GRADES = ['NEW', 'LIKE_NEW', 'EXCELLENT', 'GOOD', 'FAIR']
 const AUTH_STATUSES = ['PENDING', 'AUTHENTICATED', 'NOT_REQUIRED']
 
 function Field({ label, name, value, onChange, type = 'text', as, options, className = '' }) {
@@ -108,7 +108,7 @@ function ProductModal({ product, onClose, onSaved }) {
         {error && <div className="bg-burgundy/10 border border-burgundy/30 text-burgundy text-sm rounded-lg px-4 py-3 mb-4">{error}</div>}
 
         <form onSubmit={onSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Brand *" name="brand" value={form.brand} onChange={onChange} />
             <Field label="Name *"  name="name"  value={form.name}  onChange={onChange} />
           </div>
@@ -126,20 +126,20 @@ function ProductModal({ product, onClose, onSaved }) {
               ))}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Model Name" name="modelName" value={form.modelName} onChange={onChange} />
             <Field label="Year of Manufacture" name="yearOfManufacture" value={form.yearOfManufacture} onChange={onChange} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Serial Number" name="serialNumber" value={form.serialNumber} onChange={onChange} />
             <Field label="Certificate Number" name="certificateNumber" value={form.certificateNumber} onChange={onChange} />
           </div>
           <Field label="Description" name="description" value={form.description} onChange={onChange} as="textarea" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Condition" name="conditionGrade" value={form.conditionGrade} onChange={onChange} as="select" options={CONDITION_GRADES} />
             <Field label="Authentication Status" name="authenticationStatus" value={form.authenticationStatus} onChange={onChange} as="select" options={AUTH_STATUSES} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Buy Now Price (AED)" name="buyNowPrice" value={form.buyNowPrice} onChange={onChange} type="number" />
             <Field label="Source Country" name="sourceCountry" value={form.sourceCountry} onChange={onChange} />
           </div>
@@ -224,7 +224,7 @@ function AuctionModal({ product, onClose }) {
     buyNowEnabled: false,
     buyNowActivationRule: 'IMMEDIATE',
     buyNowActivationTime: '', buyNowActivationThreshold: '',
-    estimateLow: '', estimateHigh: '', reservePrice: '', bidIncrement: '',
+    estimateLow: '', estimateHigh: '', reservePrice: '', bidIncrement: '', maxBidAmount: '',
   })
   const [error, setError] = useState(null)
 
@@ -246,6 +246,7 @@ function AuctionModal({ product, onClose }) {
         estimateHigh: form.estimateHigh ? Number(form.estimateHigh) : null,
         reservePrice: form.reservePrice ? Number(form.reservePrice) : null,
         bidIncrement: form.bidIncrement ? Number(form.bidIncrement) : null,
+        maxBidAmount: form.maxBidAmount ? Number(form.maxBidAmount) : null,
         buyNowActivationTime: form.buyNowActivationRule === 'TIME_BASED' && form.buyNowActivationTime ? form.buyNowActivationTime : null,
         buyNowActivationThreshold: form.buyNowActivationRule === 'THRESHOLD_BASED' && form.buyNowActivationThreshold ? Number(form.buyNowActivationThreshold) : null,
       }
@@ -269,19 +270,20 @@ function AuctionModal({ product, onClose }) {
         {error && <div className="bg-burgundy/10 border border-burgundy/30 text-burgundy text-sm rounded-lg px-4 py-3 mb-4">{typeof error === 'string' ? error : JSON.stringify(error)}</div>}
 
         <form onSubmit={onSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Ticket Price (AED) *" name="ticketPrice" value={form.ticketPrice} onChange={onChange} type="number" />
             <Field label="Ticket Target *"       name="ticketTarget" value={form.ticketTarget} onChange={onChange} type="number" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Estimate Low (AED)"  name="estimateLow"  value={form.estimateLow}  onChange={onChange} type="number" />
             <Field label="Estimate High (AED)" name="estimateHigh" value={form.estimateHigh} onChange={onChange} type="number" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Reserve Price (AED)" name="reservePrice" value={form.reservePrice} onChange={onChange} type="number" />
             <Field label="Bid Increment (AED)" name="bidIncrement" value={form.bidIncrement} onChange={onChange} type="number" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <Field label="Max Bid Amount (AED)" name="maxBidAmount" value={form.maxBidAmount} onChange={onChange} type="number" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="Scheduled Start" name="scheduledStartTime" value={form.scheduledStartTime} onChange={onChange} type="datetime-local" />
             <Field label="Scheduled End"   name="scheduledEndTime"   value={form.scheduledEndTime}   onChange={onChange} type="datetime-local" />
           </div>
@@ -371,6 +373,7 @@ export default function AdminProductsPage() {
       </div>
 
       <div className="bg-white border border-taupe/15 rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-taupe/5 border-b border-taupe/15 text-left">
@@ -433,6 +436,7 @@ export default function AdminProductsPage() {
         {items.length === 0 && (
           <p className="text-taupe text-sm text-center py-10">No products yet.</p>
         )}
+        </div>
       </div>
 
       {showModal && (

@@ -26,7 +26,7 @@ function StatsBar({ auctions }) {
   const total   = auctions.length
 
   return (
-    <div className="flex items-center gap-6 text-sm">
+    <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm">
       {live > 0 && (
         <div className="flex items-center gap-2">
           <span className="relative flex h-2 w-2">
@@ -116,7 +116,7 @@ export default function AuctionsPage() {
               )}
               <span className="text-white/50 text-xs font-medium uppercase tracking-widest">Auction House</span>
             </div>
-            <h1 className="font-display text-white text-4xl sm:text-5xl font-semibold leading-tight mb-3">
+            <h1 className="font-display text-white text-2xl sm:text-4xl lg:text-5xl font-semibold leading-tight mb-3">
               All Auctions
             </h1>
             <p className="text-white/70 text-base leading-relaxed">

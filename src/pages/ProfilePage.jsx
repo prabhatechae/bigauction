@@ -105,16 +105,20 @@ export default function ProfilePage() {
       {/* ── Emerald Hero ── */}
       <div className="relative bg-emerald overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
             <Avatar name={user?.name} />
             <div className="flex-1 min-w-0">
+              <h1 className="font-display text-ivory text-xl sm:text-3xl font-semibold mb-1">{user?.name || 'Member'}</h1>
               <div className="flex flex-wrap items-center gap-2 mb-1">
-                <h1 className="font-display text-ivory text-2xl sm:text-3xl font-semibold">{user?.name || 'Member'}</h1>
                 <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
                   user?.role === 'ADMIN' ? 'bg-burgundy/20 text-ivory' : 'bg-gold/20 text-ivory'
                 }`}>
                   {user?.role === 'ADMIN' ? 'Admin' : 'Member'}
+                </span>
+                <span className="flex items-center gap-1 text-xs text-ivory/70">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                  Active
                 </span>
               </div>
               <p className="text-ivory/70 text-sm truncate">{user?.email}</p>
@@ -136,21 +140,20 @@ export default function ProfilePage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
       {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
         <StatCard label="Wallet" value={`AED ${balance.toLocaleString()}`} sub="Available balance" to="/wallet" />
         <StatCard label="Orders" value={orders.length > 0 ? orders.length : '—'} sub="Total purchases" />
         <StatCard label="Tickets" value={tickets.length > 0 ? tickets.length : '—'} sub="Auction entries" />
         <StatCard label="Favourites" value={favourites.length || '0'} sub="Saved auctions" to="/favourites" />
-        <StatCard label="Account" value={user?.role === 'ADMIN' ? 'Admin' : 'Buyer'} sub={memberSince || 'Active'} />
       </div>
 
       {/* ── Tabs ── */}
-      <div className="flex gap-1 border-b border-taupe/15 mb-6">
+      <div className="flex gap-1 border-b border-taupe/15 mb-6 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         {TABS.map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`flex-shrink-0 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
               tab === t
                 ? 'border-gold text-charcoal'
                 : 'border-transparent text-taupe hover:text-charcoal'

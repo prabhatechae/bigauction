@@ -134,11 +134,11 @@ function TicketCheckout({ product, auction, onSuccess }) {
   const image = product.imageUrls?.[0]
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 lg:py-12">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-12">
 
         {/* Left: card form */}
-        <form onSubmit={onSubmit} className="lg:col-span-3 space-y-6">
+        <form onSubmit={onSubmit} className="lg:col-span-3 space-y-6 order-2 lg:order-1">
           <div>
             <h1 className="text-charcoal text-2xl font-bold">Card Payment</h1>
             <p className="text-taupe text-sm mt-1">Enter your card details to purchase your auction ticket.</p>
@@ -209,8 +209,8 @@ function TicketCheckout({ product, auction, onSuccess }) {
         </form>
 
         {/* Right: ticket summary */}
-        <div className="lg:col-span-2">
-          <div className="bg-white border border-taupe/15 rounded-xl overflow-hidden sticky top-6">
+        <div className="lg:col-span-2 order-1 lg:order-2">
+          <div className="bg-white border border-taupe/15 rounded-xl overflow-hidden lg:sticky lg:top-6">
             {image && (
               <div className="aspect-[16/9] bg-taupe/10 overflow-hidden">
                 <img src={image} alt={product.name} className="w-full h-full object-cover" />
@@ -390,17 +390,17 @@ export default function CheckoutPage() {
             <StepIndicator step={3} current={step} />
           </div>
 
-          <p className="text-taupe text-xs hidden sm:block">
-            {step === 1 ? 'Delivery Details' : step === 2 ? 'Review & Pay' : 'Done'}
+          <p className="text-taupe text-xs">
+            {step === 1 ? 'Delivery' : step === 2 ? 'Review & Pay' : 'Done'}
           </p>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 lg:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 lg:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-12">
 
           {/* ─── Left column ─── */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 order-2 lg:order-1">
 
             {/* Step 1: Address */}
             {step === 1 && (
@@ -421,30 +421,28 @@ export default function CheckoutPage() {
                     value={address.shippingPhone} onChange={onAddressChange}
                     type="tel" required placeholder="+971 50 000 0000"
                   />
+                  <div>
+                    <label className="block text-taupe text-xs font-medium mb-1.5">
+                      Country<span className="text-gold ml-0.5">*</span>
+                    </label>
+                    <select
+                      name="shippingCountry" value={address.shippingCountry}
+                      onChange={onAddressChange}
+                      className="w-full bg-white border border-taupe/25 text-charcoal rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all"
+                    >
+                      {GCC_COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
                   <InputField
                     label="Street / Building / Apartment" name="shippingAddress"
                     value={address.shippingAddress} onChange={onAddressChange}
                     required placeholder="e.g. Villa 12, Al Wasl Road"
                   />
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputField
-                      label="City" name="shippingCity"
-                      value={address.shippingCity} onChange={onAddressChange}
-                      required placeholder="e.g. Dubai"
-                    />
-                    <div>
-                      <label className="block text-taupe text-xs font-medium mb-1.5">
-                        Country<span className="text-gold ml-0.5">*</span>
-                      </label>
-                      <select
-                        name="shippingCountry" value={address.shippingCountry}
-                        onChange={onAddressChange}
-                        className="w-full bg-white border border-taupe/25 text-charcoal rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all"
-                      >
-                        {GCC_COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                  </div>
+                  <InputField
+                    label="City" name="shippingCity"
+                    value={address.shippingCity} onChange={onAddressChange}
+                    required placeholder="e.g. Dubai"
+                  />
                 </div>
 
                 {error && (
@@ -595,8 +593,8 @@ export default function CheckoutPage() {
           </div>
 
           {/* ─── Right column: Order Summary ─── */}
-          <div className="lg:col-span-2">
-            <div className="bg-white border border-taupe/15 rounded-xl overflow-hidden sticky top-6">
+          <div className="lg:col-span-2 order-1 lg:order-2">
+            <div className="bg-white border border-taupe/15 rounded-xl overflow-hidden lg:sticky lg:top-6">
               {/* Product image */}
               {image && (
                 <div className="aspect-[16/9] bg-taupe/10 overflow-hidden">

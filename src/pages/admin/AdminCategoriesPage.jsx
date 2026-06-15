@@ -78,6 +78,7 @@ export default function AdminCategoriesPage() {
         ) : items.length === 0 ? (
           <p className="text-taupe text-sm text-center py-10">No categories yet.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-taupe/5 border-b border-taupe/15 text-left">
@@ -98,6 +99,7 @@ export default function AdminCategoriesPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

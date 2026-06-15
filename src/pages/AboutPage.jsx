@@ -90,7 +90,7 @@ export default function AboutPage() {
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gold/30" />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <p className="text-gold text-xs font-semibold tracking-[0.3em] uppercase mb-4">Who We Are</p>
-          <h1 className="font-display text-ivory text-5xl sm:text-6xl font-bold leading-tight mb-5">
+          <h1 className="font-display text-ivory text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-5">
             About BigAuction.ae
           </h1>
           <p className="text-ivory/60 text-base max-w-xl mx-auto leading-relaxed">
@@ -230,7 +230,7 @@ export default function AboutPage() {
       <section className="bg-emerald">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
           <p className="text-gold text-xs font-semibold tracking-[0.3em] uppercase mb-4">Join the Community</p>
-          <h2 className="font-display text-ivory text-4xl sm:text-5xl font-bold leading-tight mb-4">
+          <h2 className="font-display text-ivory text-2xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-4">
             Ready to Experience<br />Luxury Differently?
           </h2>
           <p className="text-ivory/60 text-sm max-w-md mx-auto leading-relaxed mb-10">

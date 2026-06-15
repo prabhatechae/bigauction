@@ -179,8 +179,8 @@ export default function Footer() {
       {/* Bottom trust bar */}
       <div className="border-t border-taupe/15 bg-ivory/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-6">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-between gap-3 sm:gap-4">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 sm:gap-6">
               {BOTTOM_TRUST.map(t => (
                 <div key={t.line1} className="flex items-center gap-2">
                   {t.icon}

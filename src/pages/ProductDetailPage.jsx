@@ -329,19 +329,19 @@ function AuctionBuyNowPanel({ auction, bids, product }) {
           <div className="grid grid-cols-3 divide-x divide-taupe/15">
 
             {/* Ticket price */}
-            <div className="px-4 py-3.5 flex flex-col items-center gap-1.5">
+            <div className="px-2 sm:px-4 py-3 sm:py-3.5 flex flex-col items-center gap-1.5">
               <IconTicket className="w-4 h-4 text-gold/70" />
-              <p className="text-taupe text-[9px] font-semibold tracking-wider uppercase text-center leading-tight">Auction Ticket Price</p>
+              <p className="text-taupe text-[9px] font-semibold tracking-wider uppercase text-center leading-tight">Ticket Price</p>
               <div className="text-center">
-                <span className="text-gold font-bold text-sm leading-none">AED {Number(auction.ticketPrice || 0).toLocaleString()}</span>
+                <span className="text-gold font-bold text-xs sm:text-sm leading-none">AED {Number(auction.ticketPrice || 0).toLocaleString()}</span>
                 <span className="text-taupe text-[10px] block leading-none mt-0.5">per ticket</span>
               </div>
             </div>
 
             {/* Tickets sold */}
-            <div className="px-4 py-3.5 flex flex-col items-center gap-1.5">
+            <div className="px-2 sm:px-4 py-3 sm:py-3.5 flex flex-col items-center gap-1.5">
               <p className="text-taupe text-[9px] font-semibold tracking-wider uppercase">Tickets Sold</p>
-              <p className="text-charcoal font-bold text-sm leading-none">{ticketsSold.toLocaleString()} / {ticketTarget.toLocaleString()}</p>
+              <p className="text-charcoal font-bold text-xs sm:text-sm leading-none">{ticketsSold.toLocaleString()} / {ticketTarget.toLocaleString()}</p>
               <div className="w-full h-1 bg-taupe/20 rounded-full overflow-hidden">
                 <div className="h-full bg-gold rounded-full transition-all duration-700" style={{ width: `${ticketPct}%` }} />
               </div>
@@ -349,7 +349,7 @@ function AuctionBuyNowPanel({ auction, bids, product }) {
             </div>
 
             {/* Countdown */}
-            <div className="px-4 py-3.5 flex flex-col items-center gap-1.5">
+            <div className="px-2 sm:px-4 py-3 sm:py-3.5 flex flex-col items-center gap-1.5">
               <p className="text-taupe text-[9px] font-semibold tracking-wider uppercase text-center leading-tight">{countdownLabel}</p>
               <div className="flex items-center gap-0.5">
                 {[[pad(countdown.dd),'DD'],[pad(countdown.hh),'HH'],[pad(countdown.mm),'MM'],[pad(countdown.ss),'SS']].map(([val, unit], i) => (
@@ -387,6 +387,11 @@ function AuctionBuyNowPanel({ auction, bids, product }) {
             {minNextBid && (
               <span className="text-taupe text-xs ml-auto">
                 Min next bid: <span className="text-charcoal font-semibold">AED {minNextBid.toLocaleString()}</span>
+              </span>
+            )}
+            {auction.maxBidAmount && (
+              <span className="text-taupe text-xs ml-auto">
+                Max bid: <span className="text-charcoal font-semibold">AED {Number(auction.maxBidAmount).toLocaleString()}</span>
               </span>
             )}
           </div>

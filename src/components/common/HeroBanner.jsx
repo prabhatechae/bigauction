@@ -44,14 +44,14 @@ export default function HeroBanner() {
   return (
     <section className="bg-ivory overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-0 items-center min-h-[500px] py-14 lg:py-0">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-0 items-center py-10 sm:py-14 lg:py-0 lg:min-h-[500px]">
 
           {/* Left: text */}
           <div className="flex flex-col justify-center">
-            <h1 className="font-display text-charcoal text-5xl sm:text-6xl font-bold leading-[1.08] tracking-tight">
+            <h1 className="font-display text-charcoal text-3xl sm:text-5xl lg:text-6xl font-bold leading-[1.08] tracking-tight">
               Exclusive luxury.<br />Unbeatable excitement.
             </h1>
-            <p className="text-taupe text-base mt-5 leading-relaxed max-w-md">
+            <p className="text-taupe text-sm sm:text-base mt-4 sm:mt-5 leading-relaxed max-w-md">
               Premium items. Transparent auctions.<br />Your next luxury find is here.
             </p>
 

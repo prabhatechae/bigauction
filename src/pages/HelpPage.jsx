@@ -241,9 +241,9 @@ export default function HelpPage() {
         <div className="absolute inset-0 opacity-[0.04]"
           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, #F2E7D5 1px, transparent 0)', backgroundSize: '28px 28px' }} />
         <div className="absolute bottom-0 left-0 right-0 h-px bg-gold/30" />
-        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+        <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 text-center">
           <p className="text-gold text-xs font-semibold tracking-[0.3em] uppercase mb-4">Help Centre</p>
-          <h1 className="font-display text-ivory text-5xl sm:text-6xl font-bold leading-tight mb-5">
+          <h1 className="font-display text-ivory text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-5">
             How Can We Help?
           </h1>
           <p className="text-ivory/60 text-sm mb-8">Search our FAQs or browse by topic below.</p>

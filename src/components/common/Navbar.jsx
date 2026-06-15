@@ -192,7 +192,15 @@ export default function Navbar() {
                 </div>
               ) : (
                 <>
-                  <div className="border-t border-taupe/20 pt-2 mt-2 space-y-1">
+                  <div className="border-t border-taupe/20 pt-2 mt-2">
+                    <div className="flex items-center justify-between px-3 py-2">
+                      <span className="text-xs text-taupe">Wallet Balance</span>
+                      <Disclosure.Button as={Link} to="/wallet" className="text-sm font-semibold text-emerald hover:text-emerald/80 transition-colors">
+                        AED {wallet ? Number(wallet.balance).toLocaleString() : '0'}
+                      </Disclosure.Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
                     {USER_MENU.map(item => (
                       <Disclosure.Button key={item.to} as={Link} to={item.to}
                         className="block px-3 py-2 rounded text-sm text-charcoal hover:bg-taupe/10 transition-colors"

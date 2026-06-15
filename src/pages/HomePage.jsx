@@ -480,17 +480,17 @@ export default function HomePage() {
             {/* Steps */}
             <div className="flex-1">
               <p className="text-charcoal text-sm font-bold uppercase tracking-[0.15em] mb-8">How Big Auction Works</p>
-              <div className="flex flex-col sm:flex-row items-start gap-0">
+              <div className="grid grid-cols-1 sm:grid-cols-5 gap-4 sm:gap-0">
                 {HOW_STEPS.map((step, i) => (
                   <div key={step.num} className="flex sm:flex-col items-center sm:items-center flex-1 gap-3 sm:gap-0 sm:text-center">
                     {/* Icon */}
-                    <div className="flex-shrink-0 w-16 h-16 rounded-full border-2 border-gold/30 bg-ivory flex items-center justify-center">
+                    <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-gold/30 bg-ivory flex items-center justify-center">
                       {step.icon}
                     </div>
                     {/* Connector arrow (between steps, horizontal on sm+) */}
                     {i < HOW_STEPS.length - 1 && (
                       <div className="hidden sm:flex flex-1 items-center justify-center -mx-2 mt-[-32px] z-0">
-                        <svg className="w-6 h-6 text-gold/40" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <svg className="w-5 h-5 text-gold/40" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                         </svg>
                       </div>

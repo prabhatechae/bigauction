@@ -62,7 +62,7 @@ export default function LoginPage() {
     <div className="bg-[#EDE0CC] min-h-[calc(100vh-64px)]">
 
       {/* ── Main 3-column layout: image | text | form ── */}
-      <div className="flex h-[calc(100vh-64px)] overflow-hidden">
+      <div className="flex flex-col lg:flex-row lg:h-[calc(100vh-64px)] lg:overflow-hidden">
 
         {/* ── COL 1: Product image ── */}
         <div className="hidden lg:block relative w-[30%] flex-shrink-0 overflow-hidden">
@@ -111,7 +111,7 @@ export default function LoginPage() {
         </div>
 
         {/* ── COL 3: Form ── */}
-        <div className="flex-1 flex items-center justify-center px-6 py-4 overflow-y-auto">
+        <div className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 lg:py-4 lg:overflow-y-auto">
           <div className="w-full max-w-[490px] my-auto">
 
             <div className="bg-white rounded-2xl border border-[#E2D8CC] shadow-[0_2px_24px_rgba(0,0,0,0.07)] p-6 sm:p-7">
@@ -165,7 +165,7 @@ export default function LoginPage() {
 
       {/* ── Trust bar ── */}
       <div className="border-t border-[#D8CCBA] bg-[#E8D8C0]">
-        <div className="max-w-5xl mx-auto px-8 py-5 grid grid-cols-2 sm:grid-cols-4 gap-5">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-5 grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
           {TRUST.map((t, i) => (
             <div key={t.title} className={`flex items-start gap-3 ${i < 3 ? 'sm:border-r sm:border-[#D0C4AE] sm:pr-5' : ''}`}>
               <svg className="w-8 h-8 text-[#C6A972] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{t.icon}</svg>

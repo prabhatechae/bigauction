@@ -34,6 +34,7 @@ public class WalletService {
     private final TicketRepository ticketRepository;
     private final CreditConfigRepository creditConfigRepository;
 
+    @Transactional(readOnly = true)
     public WalletResponse getWallet(Long userId) {
         Wallet wallet = getWalletByUserId(userId);
         List<WalletTransactionResponse> transactions = transactionRepository

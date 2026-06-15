@@ -29,6 +29,7 @@ public class UserService {
     private final WalletRepository walletRepository;
     private final TicketRepository ticketRepository;
 
+    @Transactional(readOnly = true)
     public UserProfileResponse getProfile(Long userId) {
         return toProfileResponse(findById(userId));
     }
@@ -43,6 +44,7 @@ public class UserService {
     }
 
     /** Admin: list all users with their wallet balance. */
+    @Transactional(readOnly = true)
     public List<UserSummaryResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(user -> {
@@ -54,6 +56,7 @@ public class UserService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<MyTicketResponse> getMyTickets(Long userId) {
         return ticketRepository.findByUserId(userId).stream()
                 .map(this::toMyTicketResponse)

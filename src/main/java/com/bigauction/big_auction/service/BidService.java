@@ -87,6 +87,7 @@ public class BidService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public List<BidResponse> getBidsForAuction(Long auctionId) {
         Auction auction = auctionService.findById(auctionId);
         String currency = auction.getCurrency();
@@ -97,6 +98,7 @@ public class BidService {
     }
 
     /** Returns all bids placed by the given user, enriched with auction and product context. */
+    @Transactional(readOnly = true)
     public List<MyBidResponse> getMyBids(Long userId) {
         return bidRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()

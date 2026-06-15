@@ -104,14 +104,17 @@ public class ProductService {
         productRepository.delete(product);
     }
 
+    @Transactional(readOnly = true)
     public ProductResponse getProduct(Long id) {
         return toResponse(findById(id));
     }
 
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAllProducts() {
         return productRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ProductResponse> getAvailableProducts() {
         return productRepository.findBySoldFalse().stream().map(this::toResponse).toList();
     }
@@ -120,6 +123,7 @@ public class ProductService {
      * Filters products by brand, category, condition grade, price range, auction status, and buy now availability.
      * All filter fields are optional — omit any to skip that filter.
      */
+    @Transactional(readOnly = true)
     public List<ProductResponse> filterProducts(ProductFilterRequest filter) {
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();

@@ -18,12 +18,14 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersForUser(Long userId) {
         return orderRepository.findByUserId(userId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll().stream().map(this::toResponse).toList();
     }

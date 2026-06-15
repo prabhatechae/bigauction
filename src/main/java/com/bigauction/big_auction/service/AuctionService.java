@@ -82,14 +82,17 @@ public class AuctionService {
         return toResponse(auction);
     }
 
+    @Transactional(readOnly = true)
     public AuctionResponse getAuction(Long id) {
         return toResponse(findById(id));
     }
 
+    @Transactional(readOnly = true)
     public List<AuctionResponse> getAllAuctions() {
         return auctionRepository.findAll().stream().map(this::toResponse).toList();
     }
 
+    @Transactional(readOnly = true)
     public List<AuctionResponse> getAuctionsByStatus(AuctionStatus status) {
         return auctionRepository.findByStatus(status).stream().map(this::toResponse).toList();
     }

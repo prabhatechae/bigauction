@@ -36,4 +36,13 @@
     <!-- Keep our own packages at INFO; bump to DEBUG via LOG_LEVEL_APP when investigating. -->
     <logger name="com.bigauction.big_auction" level="${LOG_LEVEL_APP:-INFO}"/>
 
+    <!--
+        SQL logging. OFF by default (WARN) because it's noisy and costs performance in prod.
+        To see queries, set LOG_LEVEL_SQL=DEBUG; to also see bound parameter values, set
+        LOG_LEVEL_SQL_PARAMS=TRACE — in /opt/bigauction/.env, then restart the service.
+        (hibernate.format_sql=true in application.properties pretty-prints the statements.)
+    -->
+    <logger name="org.hibernate.SQL" level="${LOG_LEVEL_SQL:-WARN}"/>
+    <logger name="org.hibernate.orm.jdbc.bind" level="${LOG_LEVEL_SQL_PARAMS:-WARN}"/>
+
 </configuration>

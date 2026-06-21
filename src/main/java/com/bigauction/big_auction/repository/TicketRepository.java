@@ -2,14 +2,18 @@ package com.bigauction.big_auction.repository;
 
 import com.bigauction.big_auction.entity.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
-    List<Ticket> findByAuctionId(Long auctionId);
+    @Query("SELECT t FROM Ticket t JOIN FETCH t.user WHERE t.auction.id = :auctionId")
+    List<Ticket> findByAuctionId(@Param("auctionId") Long auctionId);
 
-    List<Ticket> findByUserId(Long userId);
+    @Query("SELECT t FROM Ticket t JOIN FETCH t.auction a JOIN FETCH a.product p LEFT JOIN FETCH p.images WHERE t.user.id = :userId")
+    List<Ticket> findByUserId(@Param("userId") Long userId);
 
     boolean existsByAuctionIdAndUserId(Long auctionId, Long userId);
 

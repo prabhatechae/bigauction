@@ -96,7 +96,7 @@ export default function ProductCard({ product, isFavourite, onToggleFavourite })
   const ticketsSold  = auction?.ticketsSold  || 0
   const ticketTarget = auction?.ticketTarget || 0
   const ticketPct    = ticketTarget > 0 ? Math.min((ticketsSold / ticketTarget) * 100, 100) : 0
-  const buyNowAvail  = !!(buyNowPrice && ticketPct < 50 && hasAuction)
+  const buyNowAvail  = !!(buyNowPrice && auction?.buyNowEnabled && hasAuction)
 
   const countdownTarget =
     isActive  ? auction.scheduledEndTime :

@@ -15,4 +15,5 @@ public class BidResponse {
     private BigDecimal amount;
     private String currency;
     private LocalDateTime createdAt;
+    private boolean autoBid;
 }

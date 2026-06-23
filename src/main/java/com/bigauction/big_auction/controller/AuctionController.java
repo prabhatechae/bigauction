@@ -74,6 +74,12 @@ public class AuctionController {
         return ResponseEntity.ok(ApiResponse.ok("Auction closed", auctionService.closeAuction(id)));
     }
 
+    @PostMapping("/{id}/close-with-winner")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<AuctionResponse>> closeWithWinner(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Auction closed with winner", auctionService.closeWithWinner(id)));
+    }
+
     /**
      * Journey B – Step 5: Auction winner completes checkout.
      * Only the winner can call this. Wallet credit can optionally be applied.

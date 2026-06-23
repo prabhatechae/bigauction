@@ -26,6 +26,7 @@ public class AuctionResponse {
     private LocalDateTime actualStartTime;
     private LocalDateTime endTime;
     private boolean buyNowEnabled;
+    private boolean buyNowAvailable;
     private BuyNowActivationRule buyNowActivationRule;
     private BigDecimal estimateLow;
     private BigDecimal estimateHigh;

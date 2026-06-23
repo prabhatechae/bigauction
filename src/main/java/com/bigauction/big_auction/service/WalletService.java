@@ -46,22 +46,22 @@ public class WalletService {
         return WalletResponse.builder()
                 .id(wallet.getId())
                 .balance(wallet.getBalance())
+                .rewardCredits(wallet.getRewardCredits())
                 .transactions(transactions)
                 .build();
     }
 
     /**
-     * Issues platform credit to all ticket holders who did not win the auction.
-     * If expiry is enabled in the credit config, an expiry date is set on each transaction.
-     * Called automatically when an auction ends (win or Buy Now).
+     * Issues consolation reward credits to all non-winning ticket holders after a SOLD auction.
+     * The credit amount is creditPercentage% of the ticket price (configured by admin).
+     * If no CreditConfig exists, nothing is issued.
      */
     @Transactional
     public void distributeCreditsToLosers(Auction auction, Long winnerId) {
         CreditConfig config = creditConfigRepository.findAll().stream().findFirst().orElse(null);
-        if (config == null) return; // No credit config set — skip distribution silently
+        if (config == null) return;
         List<Ticket> losingTickets = ticketRepository.findByAuctionIdAndUserIdNot(auction.getId(), winnerId);
 
-        // Deduplicate — a user may have bought multiple tickets; credit once per user
         losingTickets.stream()
                 .map(ticket -> ticket.getUser().getId())
                 .distinct()
@@ -74,28 +74,55 @@ public class WalletService {
                             ? LocalDateTime.now().plusDays(config.getExpiryDays())
                             : null;
 
-                    creditWallet(userId, credit, TransactionReason.AUCTION_LOSS_CREDIT,
-                            "Credit for auction #" + auction.getId(), auction.getId(), expiresAt);
+                    creditRewardWallet(userId, credit, "Credit for auction #" + auction.getId(), auction.getId(), expiresAt);
                 });
     }
 
     /**
-     * Deducts wallet credit from a user's balance for a purchase.
-     * Returns the actual amount deducted (capped by balance and config limits).
+     * Refunds the full ticket price as reward credits to all ticket holders when an auction
+     * closes with no winner. CreditConfig is not required — this is always a 100% refund.
+     */
+    @Transactional
+    public void refundTicketsAsCredits(Auction auction) {
+        CreditConfig config = creditConfigRepository.findAll().stream().findFirst().orElse(null);
+        LocalDateTime expiresAt = config != null && config.isExpiryEnabled() && config.getExpiryDays() != null
+                ? LocalDateTime.now().plusDays(config.getExpiryDays())
+                : null;
+
+        ticketRepository.findByAuctionId(auction.getId()).stream()
+                .map(ticket -> ticket.getUser().getId())
+                .distinct()
+                .forEach(userId -> creditRewardWallet(
+                        userId,
+                        auction.getTicketPrice(),
+                        "Ticket refund for auction #" + auction.getId(),
+                        auction.getId(),
+                        expiresAt));
+    }
+
+    /**
+     * Deducts credit for a purchase. Reward credits are consumed first, then wallet balance.
+     * Returns the actual amount deducted (capped by total available and config limits).
      */
     @Transactional
     public BigDecimal applyCredit(Long userId, BigDecimal requestedCredit, TransactionReason reason, Long auctionId) {
         CreditConfig config = creditConfigRepository.findAll().stream().findFirst().orElse(null);
         Wallet wallet = getWalletByUserId(userId);
 
-        // Cap credit to configured maximum (if config exists) and wallet balance
         BigDecimal maxCredit = config != null ? config.getMaxCreditPerPurchase() : requestedCredit;
-        BigDecimal applicable = requestedCredit
-                .min(maxCredit)
-                .min(wallet.getBalance());
+        BigDecimal totalAvailable = wallet.getRewardCredits().add(wallet.getBalance());
+        BigDecimal applicable = requestedCredit.min(maxCredit).min(totalAvailable);
 
         if (applicable.compareTo(BigDecimal.ZERO) > 0) {
-            wallet.setBalance(wallet.getBalance().subtract(applicable));
+            // Drain reward credits first
+            BigDecimal fromReward = applicable.min(wallet.getRewardCredits());
+            if (fromReward.compareTo(BigDecimal.ZERO) > 0) {
+                wallet.setRewardCredits(wallet.getRewardCredits().subtract(fromReward));
+            }
+            BigDecimal fromBalance = applicable.subtract(fromReward);
+            if (fromBalance.compareTo(BigDecimal.ZERO) > 0) {
+                wallet.setBalance(wallet.getBalance().subtract(fromBalance));
+            }
             walletRepository.save(wallet);
 
             WalletTransaction tx = WalletTransaction.builder()
@@ -158,8 +185,8 @@ public class WalletService {
 
         for (WalletTransaction tx : expired) {
             Wallet wallet = tx.getWallet();
-            BigDecimal deduction = tx.getAmount().min(wallet.getBalance());
-            wallet.setBalance(wallet.getBalance().subtract(deduction));
+            BigDecimal deduction = tx.getAmount().min(wallet.getRewardCredits());
+            wallet.setRewardCredits(wallet.getRewardCredits().subtract(deduction));
             walletRepository.save(wallet);
 
             tx.setExpired(true);
@@ -168,6 +195,24 @@ public class WalletService {
     }
 
     // ---- Private helpers ----
+
+    /** Credits non-withdrawable reward credits (AUCTION_LOSS_CREDIT). Tracked in rewardCredits, not balance. */
+    private void creditRewardWallet(Long userId, BigDecimal amount, String note, Long auctionId, LocalDateTime expiresAt) {
+        Wallet wallet = getWalletByUserId(userId);
+        wallet.setRewardCredits(wallet.getRewardCredits().add(amount));
+        walletRepository.save(wallet);
+
+        WalletTransaction tx = WalletTransaction.builder()
+                .wallet(wallet)
+                .type(TransactionType.CREDIT)
+                .reason(TransactionReason.AUCTION_LOSS_CREDIT)
+                .amount(amount)
+                .auctionId(auctionId)
+                .note(note)
+                .expiresAt(expiresAt)
+                .build();
+        transactionRepository.save(tx);
+    }
 
     private void creditWallet(Long userId, BigDecimal amount, TransactionReason reason,
                                String note, Long auctionId, LocalDateTime expiresAt) {

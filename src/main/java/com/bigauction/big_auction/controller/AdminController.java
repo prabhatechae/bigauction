@@ -2,6 +2,7 @@ package com.bigauction.big_auction.controller;
 
 import com.bigauction.big_auction.common.ApiResponse;
 import com.bigauction.big_auction.dto.request.CreditConfigRequest;
+import com.bigauction.big_auction.dto.response.AutoBidConfigResponse;
 import com.bigauction.big_auction.dto.response.DepositRequestResponse;
 import com.bigauction.big_auction.dto.response.OrderResponse;
 import com.bigauction.big_auction.dto.response.ParticipantResponse;
@@ -14,6 +15,7 @@ import com.bigauction.big_auction.enums.AuctionStatus;
 import com.bigauction.big_auction.enums.DepositStatus;
 import com.bigauction.big_auction.enums.OrderStatus;
 import com.bigauction.big_auction.exception.AppException;
+import com.bigauction.big_auction.repository.AutoBidConfigRepository;
 import com.bigauction.big_auction.repository.DepositRequestRepository;
 import com.bigauction.big_auction.repository.TicketRepository;
 import com.bigauction.big_auction.service.AdminService;
@@ -46,6 +48,7 @@ public class AdminController {
     private final OrderService orderService;
     private final AuctionService auctionService;
     private final TicketRepository ticketRepository;
+    private final AutoBidConfigRepository autoBidConfigRepository;
     private final ReportService reportService;
     private final UserService userService;
     private final WalletService walletService;
@@ -102,6 +105,25 @@ public class AdminController {
                 .toList();
 
         return ResponseEntity.ok(ApiResponse.ok("Participants fetched", participants));
+    }
+
+    @GetMapping("/auctions/{auctionId}/auto-bids")
+    public ResponseEntity<ApiResponse<List<AutoBidConfigResponse>>> getAutoBidConfigs(
+            @PathVariable Long auctionId) {
+
+        List<AutoBidConfigResponse> configs = autoBidConfigRepository
+                .findByAuctionIdAndEnabledTrue(auctionId)
+                .stream()
+                .map(c -> AutoBidConfigResponse.builder()
+                        .auctionId(auctionId)
+                        .userId(c.getUser().getId())
+                        .increment(c.getIncrement())
+                        .maxLimit(c.getMaxLimit())
+                        .enabled(c.isEnabled())
+                        .build())
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.ok("Auto bid configs fetched", configs));
     }
 
     // ---- Winner Tracking ----

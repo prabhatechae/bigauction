@@ -11,5 +11,6 @@ import java.util.List;
 public class WalletResponse {
     private Long id;
     private BigDecimal balance;
+    private BigDecimal rewardCredits;
     private List<WalletTransactionResponse> transactions;
 }

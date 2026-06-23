@@ -27,10 +27,14 @@ public class MyTicketResponse {
     private int ticketTarget;
     private LocalDateTime scheduledStartTime;
     private LocalDateTime scheduledEndTime;
+    private BigDecimal currentHighestBid;
+    private BigDecimal maxBidAmount;
+    private boolean isWinner;
 
     // Product context
     private Long productId;
     private String productName;
     private String brand;
+    private BigDecimal buyNowPrice;
     private List<String> imageUrls;
 }

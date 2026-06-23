@@ -17,7 +17,9 @@ import java.math.BigDecimal;
  *   /topic/auctions/{id}/status         — auction status changed (all subscribers)
  *
  * User-specific topics:
- *   /topic/users/{userId}/notifications — outbid / winner alerts (that user only)
+ *   /topic/users/{userId}/notifications — outbid / winner / auto-bid alerts (that user only)
+ *
+ * Notification type values: OUTBID, AUCTION_WON, AUCTION_CLOSED, AUTO_BID_MAX_REACHED
  */
 @Service
 @RequiredArgsConstructor
@@ -62,6 +64,21 @@ public class BroadcastService {
                         + ". Please complete your checkout.")
                 .build();
         messagingTemplate.convertAndSend("/topic/users/" + winnerId + "/notifications", notification);
+    }
+
+    /** Notify a user that their auto bid stopped because the maximum limit was reached and they were outbid. */
+    public void broadcastAutoBidMaxReached(Long userId, Long auctionId, String productName,
+                                           BigDecimal maxLimit, String currency) {
+        UserNotification notification = UserNotification.builder()
+                .type("AUTO_BID_MAX_REACHED")
+                .auctionId(auctionId)
+                .productName(productName)
+                .amount(maxLimit)
+                .currency(currency)
+                .message("Your auto bid limit of " + currency + " " + maxLimit.toPlainString()
+                        + " has been reached for " + productName + ". You have been outbid.")
+                .build();
+        messagingTemplate.convertAndSend("/topic/users/" + userId + "/notifications", notification);
     }
 
     /** Notify all ticket holders that an auction closed with no winner. */

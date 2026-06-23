@@ -27,6 +27,14 @@ public class User extends BaseEntity {
 
     private String phone;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Builder.Default
+    private boolean phoneVerified = false;
+
+    @Column(length = 10, columnDefinition = "varchar(10) default 'en'")
+    @Builder.Default
+    private String language = "en";
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

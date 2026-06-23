@@ -115,6 +115,18 @@ public class AuctionService {
         return toResponse(auction);
     }
 
+    /** Admin manually declares the current highest bidder as winner. */
+    @Transactional
+    public AuctionResponse closeWithWinner(Long auctionId) {
+        Auction auction = findById(auctionId);
+        assertStatus(auction, AuctionStatus.ACTIVE, "Only ACTIVE auctions can be closed");
+        if (auction.getHighestBidder() == null) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "No bids have been placed — cannot declare a winner");
+        }
+        finalizeAsSold(auction, auction.getHighestBidder());
+        return toResponse(auction);
+    }
+
     /**
      * Marks the auction as SOLD and distributes credits to non-winners.
      * Called by BuyNowService (Buy Now) and AuctionCheckoutService (auction win).
@@ -229,7 +241,7 @@ public class AuctionService {
         auction.setStatus(AuctionStatus.CLOSED);
         auction.setEndTime(LocalDateTime.now());
         auctionRepository.save(auction);
-        walletService.distributeCreditsToLosers(auction, -1L);
+        walletService.refundTicketsAsCredits(auction);
         broadcastService.broadcastAuctionStatus(auction.getId(), toResponse(auction));
 
         // Notify every ticket holder that the auction closed with no winner
@@ -283,6 +295,7 @@ public class AuctionService {
                 .actualStartTime(auction.getActualStartTime())
                 .endTime(auction.getEndTime())
                 .buyNowEnabled(auction.isBuyNowEnabled())
+                .buyNowAvailable(isBuyNowCurrentlyAvailable(auction))
                 .buyNowActivationRule(auction.getBuyNowActivationRule())
                 .estimateLow(auction.getEstimateLow())
                 .estimateHigh(auction.getEstimateHigh())

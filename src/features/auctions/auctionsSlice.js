@@ -41,6 +41,21 @@ export const checkoutAuctionWin = createAsyncThunk('auctions/checkout',      asy
   catch (err) { return rejectWithValue(err.message || 'Checkout failed') }
 })
 
+export const setupAutoBid = createAsyncThunk('auctions/setupAutoBid', async ({ auctionId, increment, maxLimit, startingBid }, { rejectWithValue }) => {
+  try { return (await api.post(`/auctions/${auctionId}/auto-bid`, { increment, maxLimit, ...(startingBid ? { startingBid } : {}) })).data }
+  catch (err) { return rejectWithValue(err.message || 'Failed to configure auto bid') }
+})
+
+export const getAutoBid = createAsyncThunk('auctions/getAutoBid', async (auctionId, { rejectWithValue }) => {
+  try { return (await api.get(`/auctions/${auctionId}/auto-bid`)).data }
+  catch { return null }
+})
+
+export const disableAutoBid = createAsyncThunk('auctions/disableAutoBid', async (auctionId, { rejectWithValue }) => {
+  try { await api.delete(`/auctions/${auctionId}/auto-bid`); return null }
+  catch (err) { return rejectWithValue(err.message || 'Failed to disable auto bid') }
+})
+
 // ── Admin thunks ──────────────────────────────────────────
 export const createAuction  = createAsyncThunk('auctions/create',   async (data, { rejectWithValue }) => {
   try { return (await api.post('/auctions', data)).data }
@@ -57,9 +72,19 @@ export const closeAuction   = createAsyncThunk('auctions/close',    async (id, {
   catch (err) { return rejectWithValue(err.message) }
 })
 
+export const closeAuctionWithWinner = createAsyncThunk('auctions/closeWithWinner', async (id, { rejectWithValue }) => {
+  try { return (await api.post(`/auctions/${id}/close-with-winner`)).data }
+  catch (err) { return rejectWithValue(err.message) }
+})
+
 export const fetchParticipants = createAsyncThunk('auctions/participants', async (auctionId, { rejectWithValue }) => {
   try { return (await api.get(`/admin/auctions/${auctionId}/participants`)).data }
   catch (err) { return rejectWithValue(err.message) }
+})
+
+export const fetchAutoBidConfigs = createAsyncThunk('auctions/autoBidConfigs', async (auctionId, { rejectWithValue }) => {
+  try { return (await api.get(`/admin/auctions/${auctionId}/auto-bids`)).data }
+  catch { return [] }
 })
 
 const auctionsSlice = createSlice({
@@ -69,13 +94,15 @@ const auctionsSlice = createSlice({
     selected:     null,
     bids:         [],
     participants: [],
+    autoBidConfigs: [],
     userHasTicket: false,
+    autoBidConfig: null,
     loading:      false,
     error:        null,
   },
   reducers: {
     clearError(state)          { state.error = null },
-    clearSelected(state)       { state.selected = null; state.bids = []; state.userHasTicket = false },
+    clearSelected(state)       { state.selected = null; state.bids = []; state.userHasTicket = false; state.autoBidConfig = null },
     // Called by the WebSocket hook to push live bids
     addLiveBid(state, action)  {
       state.bids.unshift(action.payload)
@@ -102,7 +129,7 @@ const auctionsSlice = createSlice({
       .addCase(fetchAuctionById.rejected,      rejected)
       .addCase(fetchBids.fulfilled,            (state, a) => { state.bids = a.payload })
       .addCase(placeBid.pending,               pending)
-      .addCase(placeBid.fulfilled,             (state, a) => { state.loading = false; state.bids.unshift(a.payload) })
+      .addCase(placeBid.fulfilled,             (state) => { state.loading = false })
       .addCase(placeBid.rejected,              rejected)
       .addCase(createAuction.fulfilled,        (state, a) => { state.items.unshift(a.payload) })
       .addCase(activateAuction.fulfilled,      (state, a) => {
@@ -115,10 +142,19 @@ const auctionsSlice = createSlice({
         if (idx !== -1) state.items[idx] = a.payload
         if (state.selected?.id === a.payload.id) state.selected = a.payload
       })
+      .addCase(closeAuctionWithWinner.fulfilled, (state, a) => {
+        const idx = state.items.findIndex(x => x.id === a.payload.id)
+        if (idx !== -1) state.items[idx] = a.payload
+        if (state.selected?.id === a.payload.id) state.selected = a.payload
+      })
       .addCase(purchaseTicket.fulfilled,         (state) => { state.loading = false; state.userHasTicket = true })
       .addCase(purchaseTicketByCard.fulfilled,   (state) => { state.loading = false; state.userHasTicket = true })
       .addCase(checkMyTicket.fulfilled,        (state, a) => { state.userHasTicket = a.payload })
       .addCase(fetchParticipants.fulfilled,    (state, a) => { state.participants = a.payload })
+      .addCase(fetchAutoBidConfigs.fulfilled,  (state, a) => { state.autoBidConfigs = a.payload || [] })
+      .addCase(getAutoBid.fulfilled,           (state, a) => { state.autoBidConfig = a.payload })
+      .addCase(setupAutoBid.fulfilled,         (state, a) => { state.autoBidConfig = a.payload })
+      .addCase(disableAutoBid.fulfilled,       (state)    => { state.autoBidConfig = null })
   },
 })
 

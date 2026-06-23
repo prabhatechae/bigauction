@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchAuctions } from '../features/auctions/auctionsSlice'
+import { fetchFavourites } from '../features/favourites/favouritesSlice'
 import useFavourites from '../hooks/useFavourites'
 import HeroBanner from '../components/common/HeroBanner'
 
@@ -382,9 +383,13 @@ const HOW_STEPS = [
 export default function HomePage() {
   const dispatch = useDispatch()
   const { items: auctions } = useSelector(s => s.auctions)
+  const { user } = useSelector(s => s.auth)
   const { isFavourite, toggle: toggleFavourite } = useFavourites()
 
-  useEffect(() => { dispatch(fetchAuctions()) }, [])
+  useEffect(() => {
+    dispatch(fetchAuctions())
+    if (user) dispatch(fetchFavourites())
+  }, [])
 
   const pendingAuctions = auctions.filter(a => a.status === 'PENDING')
   const liveAuctions    = auctions.filter(a => a.status === 'ACTIVE')
@@ -417,8 +422,8 @@ export default function HomePage() {
                 <ComingSoonCard
                   key={a.id}
                   auction={a}
-                  isFavourite={isFavourite(a.id)}
-                  onToggleFavourite={toggleFavourite}
+                  isFavourite={isFavourite(a.product?.id)}
+                  onToggleFavourite={() => toggleFavourite(a.product?.id)}
                 />
               ))}
             </Carousel>
@@ -441,8 +446,8 @@ export default function HomePage() {
                 <LiveAuctionCard
                   key={a.id}
                   auction={a}
-                  isFavourite={isFavourite(a.id)}
-                  onToggleFavourite={toggleFavourite}
+                  isFavourite={isFavourite(a.product?.id)}
+                  onToggleFavourite={() => toggleFavourite(a.product?.id)}
                 />
               ))}
             </Carousel>

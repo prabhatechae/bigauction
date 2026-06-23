@@ -5,12 +5,15 @@ import api from '../services/api'
 import Loader from '../components/common/Loader'
 
 const REASON_MAP = {
+  TICKET_PURCHASE:      'Ticket purchase',
   AUCTION_LOSS_CREDIT:  'Auction loss credit',
   BUY_NOW_PURCHASE:     'Buy Now purchase',
   AUCTION_WIN_PURCHASE: 'Auction checkout',
   ADMIN_ADJUSTMENT:     'Admin adjustment',
   WALLET_DEPOSIT:       'Wallet deposit',
 }
+
+const REWARD_REASONS = new Set(['AUCTION_LOSS_CREDIT'])
 
 const STATUS_STYLE = {
   PENDING:  'bg-gold/10 text-gold',
@@ -157,9 +160,10 @@ export default function WalletPage() {
   const dispatch = useDispatch()
   const { wallet, loading } = useSelector(s => s.wallet)
 
-  const [showAddFunds, setShowAddFunds] = useState(false)
-  const [deposits, setDeposits]         = useState([])
+  const [showAddFunds, setShowAddFunds]     = useState(false)
+  const [deposits, setDeposits]             = useState([])
   const [depositSuccess, setDepositSuccess] = useState(false)
+  const [stmtTab, setStmtTab]               = useState('wallet')
 
   useEffect(() => { dispatch(fetchWallet()) }, [])
 
@@ -171,24 +175,38 @@ export default function WalletPage() {
 
   const onDepositSubmitted = () => {
     setShowAddFunds(false)
-    setDepositSuccess(s => !s)  // toggle to re-fetch deposits
+    setDepositSuccess(s => !s)
   }
 
   if (loading && !wallet) return <Loader text="Loading wallet…" />
 
-  const balance = wallet ? Number(wallet.balance) : 0
-  const txs     = wallet?.transactions || []
+  const balance       = wallet ? Number(wallet.balance || 0) : 0
+  const rewardCredits = wallet ? Number(wallet.rewardCredits || 0) : 0
+  const txs           = wallet?.transactions || []
+
+  const walletTxs = txs.filter(tx => !REWARD_REASONS.has(tx.reason))
+  const rewardTxs = txs.filter(tx =>  REWARD_REASONS.has(tx.reason))
 
   return (
     <div className="bg-ivory min-h-screen">
 
       {/* ── Emerald Hero ── */}
-      <div className="relative bg-emerald overflow-hidden">
+      <div className="relative overflow-hidden" style={{ backgroundColor: '#064C3B' }}>
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14 lg:py-20">
-          <p className="text-ivory/60 text-xs uppercase tracking-widest mb-3">My Wallet</p>
-          <p className="text-ivory text-3xl sm:text-5xl font-bold mt-1 font-display">AED {balance.toLocaleString()}</p>
-          <p className="text-ivory/50 text-sm mt-3">Track your balance and transactions</p>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14 lg:py-16">
+          <p className="text-ivory/60 text-xs uppercase tracking-widest mb-5">My Wallet</p>
+          <div className="flex flex-col sm:flex-row sm:items-end gap-6 sm:gap-16">
+            <div>
+              <p className="text-ivory/50 text-xs mb-1 uppercase tracking-wider">Wallet Balance</p>
+              <p className="text-ivory text-3xl sm:text-5xl font-bold font-display">AED {balance.toLocaleString('en-AE', { minimumFractionDigits: 2 })}</p>
+              <p className="text-ivory/40 text-xs mt-1">Withdrawable cash balance</p>
+            </div>
+            <div>
+              <p className="text-xs mb-1 uppercase tracking-wider" style={{ color: 'rgba(198,169,114,0.7)' }}>Reward Credits</p>
+              <p className="text-3xl sm:text-4xl font-bold font-display" style={{ color: '#C6A972' }}>AED {rewardCredits.toLocaleString('en-AE', { minimumFractionDigits: 2 })}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(198,169,114,0.45)' }}>For auction tickets only</p>
+            </div>
+          </div>
           <button
             onClick={() => setShowAddFunds(true)}
             className="mt-6 bg-ivory text-emerald font-bold px-5 py-2.5 rounded-lg hover:bg-ivory/90 transition-colors text-sm"
@@ -198,47 +216,71 @@ export default function WalletPage() {
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
+      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
-      {/* Deposit request history */}
-      {deposits.length > 0 && (
-        <div className="bg-white border border-taupe/15 rounded-xl p-6">
-          <h2 className="text-charcoal font-semibold mb-4">Deposit Requests</h2>
-          <div className="space-y-3">
-            {deposits.map(d => (
-              <div key={d.id} className="flex items-center justify-between py-3 border-b border-taupe/10 last:border-0">
-                <div className="flex-1 min-w-0">
-                  <p className="text-charcoal text-sm font-medium">AED {Number(d.amount).toLocaleString()}</p>
-                  <p className="text-taupe text-xs mt-0.5">Ref: {d.bankReference}</p>
-                  {d.adminNote && <p className="text-taupe text-xs mt-0.5 italic">{d.adminNote}</p>}
-                  <p className="text-taupe text-xs mt-0.5">{new Date(d.createdAt).toLocaleDateString()}</p>
+        {/* Deposit request history */}
+        {deposits.length > 0 && (
+          <div className="bg-white border border-taupe/15 rounded-xl p-6">
+            <h2 className="text-charcoal font-semibold mb-4">Deposit Requests</h2>
+            <div className="space-y-3">
+              {deposits.map(d => (
+                <div key={d.id} className="flex items-center justify-between py-3 border-b border-taupe/10 last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-charcoal text-sm font-medium">AED {Number(d.amount).toLocaleString()}</p>
+                    <p className="text-taupe text-xs mt-0.5">Ref: {d.bankReference}</p>
+                    {d.adminNote && <p className="text-taupe text-xs mt-0.5 italic">{d.adminNote}</p>}
+                    <p className="text-taupe text-xs mt-0.5">{new Date(d.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLE[d.status] || 'bg-taupe/10 text-taupe'}`}>
+                    {d.status}
+                  </span>
                 </div>
-                <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_STYLE[d.status] || 'bg-taupe/10 text-taupe'}`}>
-                  {d.status}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Transaction history */}
-      <div className="bg-white border border-taupe/15 rounded-xl p-6">
-        <h2 className="text-charcoal font-semibold mb-4">Transaction History</h2>
-        {txs.length === 0 ? (
-          <p className="text-taupe text-sm text-center py-8">No transactions yet.</p>
-        ) : (
-          <div>
-            {txs.map((tx, i) => <TransactionRow key={tx.id || i} tx={tx} />)}
+              ))}
+            </div>
           </div>
         )}
+
+        {/* Split Statements */}
+        <div className="bg-white border border-taupe/15 rounded-xl overflow-hidden">
+          {/* Tab bar */}
+          <div className="flex border-b border-taupe/15">
+            {[
+              { key: 'wallet', label: 'Wallet Statement' },
+              { key: 'reward', label: 'Reward Credits' },
+            ].map(t => (
+              <button key={t.key} onClick={() => setStmtTab(t.key)}
+                className="flex-1 py-3.5 text-sm font-semibold transition-colors"
+                style={stmtTab === t.key
+                  ? { color: '#064C3B', borderBottom: '2px solid #064C3B' }
+                  : { color: '#8A8176' }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-6">
+            {stmtTab === 'wallet' ? (
+              walletTxs.length === 0
+                ? <p className="text-taupe text-sm text-center py-8">No wallet transactions yet.</p>
+                : walletTxs.map((tx, i) => <TransactionRow key={tx.id || i} tx={tx} />)
+            ) : (
+              rewardTxs.length === 0
+                ? (
+                  <div className="text-center py-8">
+                    <p className="text-taupe text-sm">No reward credits yet.</p>
+                    <p className="text-taupe/60 text-xs mt-1">Credits are issued when you don't win an auction.</p>
+                  </div>
+                )
+                : rewardTxs.map((tx, i) => <TransactionRow key={tx.id || i} tx={tx} />)
+            )}
+          </div>
+        </div>
+
       </div>
 
       {showAddFunds && (
         <AddFundsModal onClose={() => setShowAddFunds(false)} onSubmitted={onDepositSubmitted} />
       )}
-
-      </div>
     </div>
   )
 }

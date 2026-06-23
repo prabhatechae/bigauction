@@ -1,26 +1,27 @@
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { addFavourite, removeFavourite } from '../features/favourites/favouritesSlice'
 
-const STORAGE_KEY = 'bigauction_favourites'
-
-function load() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [] }
-  catch { return [] }
-}
-
+/**
+ * Server-side favourites hook (uses productId).
+ * Falls back to no-op when not authenticated.
+ */
 export default function useFavourites() {
-  const [favourites, setFavourites] = useState(() => load())
+  const dispatch = useDispatch()
+  const { items } = useSelector(s => s.favourites)
+  const { user }  = useSelector(s => s.auth)
 
-  const toggle = useCallback(auctionId => {
-    setFavourites(prev => {
-      const next = prev.includes(auctionId)
-        ? prev.filter(id => id !== auctionId)
-        : [...prev, auctionId]
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
-      return next
-    })
-  }, [])
+  // items is an array of FavouriteResponse objects with productId
+  const isFavourite = useCallback(
+    productId => items.some(f => f.productId === productId),
+    [items]
+  )
 
-  const isFavourite = useCallback(auctionId => favourites.includes(auctionId), [favourites])
+  const toggle = useCallback(productId => {
+    if (!user || !productId) return
+    if (isFavourite(productId)) dispatch(removeFavourite(productId))
+    else                         dispatch(addFavourite(productId))
+  }, [user, isFavourite, dispatch])
 
-  return { favourites, toggle, isFavourite }
+  return { favourites: items.map(f => f.productId), toggle, isFavourite }
 }

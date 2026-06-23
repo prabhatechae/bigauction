@@ -6,6 +6,7 @@ import { fetchProductById, clearSelected } from '../features/products/productsSl
 import {
   fetchBids, fetchAuctionById, placeBid, purchaseTicket,
   clearSelected as clearAuction, checkMyTicket,
+  setupAutoBid, getAutoBid, disableAutoBid,
 } from '../features/auctions/auctionsSlice'
 import { fetchWallet } from '../features/wallet/walletSlice'
 import useWebSocket from '../hooks/useWebSocket'
@@ -693,15 +694,18 @@ function LiveAuctionPanel({ auction, bids, product }) {
   const { wallet } = useSelector(s => s.wallet)
   const { loading, userHasTicket } = useSelector(s => s.auctions)
 
-  const [bidAmount, setBidAmount]           = useState('')
+  const [bidAmount, setBidAmount]               = useState('')
+  const [autoBidStart, setAutoBidStart]         = useState('')
   const [autoBidIncrement, setAutoBidIncrement] = useState('')
-  const [autoBidUpTo, setAutoBidUpTo]       = useState('')
-  const [autoBidMax, setAutoBidMax]         = useState('')
-  const [autoBidToMax, setAutoBidToMax]     = useState(false)
-  const [activeTab, setActiveTab]           = useState('place') // 'place' | 'manual'
-  const [showLeaderboard, setShowLeaderboard] = useState(false)
-  const [msg, setMsg]                       = useState(null)
+  const [autoBidMax, setAutoBidMax]             = useState('')
+  const [autoBidToMax, setAutoBidToMax]         = useState(false)
+  const [autoBidLoading, setAutoBidLoading]     = useState(false)
+  const [autoBidMsg, setAutoBidMsg]             = useState(null)
+  const [activeTab, setActiveTab]               = useState('place') // 'place' | 'manual'
+  const [showLeaderboard, setShowLeaderboard]   = useState(false)
+  const [msg, setMsg]                           = useState(null)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const { autoBidConfig } = useSelector(s => s.auctions)
 
   useEffect(() => {
     if (location.state?.autoTicket) {
@@ -713,6 +717,21 @@ function LiveAuctionPanel({ auction, bids, product }) {
 
   useWebSocket(auction?.id)
   useEffect(() => { if (user) dispatch(fetchWallet()) }, [user])
+
+  // Load existing auto bid config for this auction
+  useEffect(() => {
+    if (user && auction?.id && auction?.status === 'ACTIVE') {
+      dispatch(getAutoBid(auction.id))
+    }
+  }, [user, auction?.id, auction?.status])
+
+  // Pre-fill form when config loads
+  useEffect(() => {
+    if (autoBidConfig?.enabled) {
+      setAutoBidIncrement(String(autoBidConfig.increment))
+      setAutoBidMax(String(autoBidConfig.maxLimit))
+    }
+  }, [autoBidConfig])
 
   const walletBal     = wallet ? Number(wallet.balance) : 0
   const currentBid    = bids.length > 0 ? Number(bids[0].amount) : Number(auction.currentHighestBid || 0)
@@ -771,6 +790,41 @@ function LiveAuctionPanel({ auction, bids, product }) {
   }
 
   const onCardPayment = () => { setShowPaymentModal(false); navigate('/checkout', { state: { type: 'ticket', product, auction } }) }
+
+  const buyNowPrice = product.buyNowPrice ? Number(product.buyNowPrice) : null
+  const buyNowAvail = !!(buyNowPrice && auction.buyNowAvailable)
+  const onBuyNow    = () => {
+    if (!user) { navigate('/login'); return }
+    navigate('/checkout', { state: { type: 'buynow', product, auction } })
+  }
+
+  const onSetupAutoBid = async e => {
+    e.preventDefault()
+    if (!autoBidIncrement || !autoBidMax) return
+    setAutoBidLoading(true); setAutoBidMsg(null)
+    try {
+      await dispatch(setupAutoBid({
+        auctionId:   auction.id,
+        increment:   Number(autoBidIncrement),
+        maxLimit:    Number(autoBidMax),
+        startingBid: autoBidStart ? Number(autoBidStart) : undefined,
+      })).unwrap()
+      setAutoBidMsg({ type: 'success', text: 'Auto bid is active!' })
+    } catch (e) {
+      setAutoBidMsg({ type: 'error', text: typeof e === 'string' ? e : e?.message || 'Failed to configure auto bid' })
+    } finally { setAutoBidLoading(false) }
+  }
+
+  const onDisableAutoBid = async () => {
+    setAutoBidLoading(true); setAutoBidMsg(null)
+    try {
+      await dispatch(disableAutoBid(auction.id)).unwrap()
+      setAutoBidMsg({ type: 'success', text: 'Auto bid disabled.' })
+      setAutoBidStart(''); setAutoBidIncrement(''); setAutoBidMax(''); setAutoBidToMax(false)
+    } catch (e) {
+      setAutoBidMsg({ type: 'error', text: typeof e === 'string' ? e : e?.message || 'Failed to disable auto bid' })
+    } finally { setAutoBidLoading(false) }
+  }
 
   const isActive  = auction.status === 'ACTIVE'
   const isSold    = auction.status === 'SOLD'
@@ -1085,78 +1139,174 @@ function LiveAuctionPanel({ auction, bids, product }) {
         </div>
       )}
 
+      {/* BUY NOW section */}
+      {isActive && buyNowAvail && (
+        <div className="border border-gold/35 rounded-xl overflow-hidden mb-4">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gold/20 bg-gold/5">
+            <div className="flex items-center gap-2">
+              <IconBag className="w-3.5 h-3.5 text-gold" />
+              <span className="text-xs font-bold text-charcoal uppercase tracking-widest">Buy Now</span>
+            </div>
+            <span className="text-gold font-bold text-sm">AED {buyNowPrice.toLocaleString()}</span>
+          </div>
+          <div className="p-4 space-y-3">
+            <p className="text-taupe text-[11px] leading-relaxed">
+              Skip the auction and purchase this item immediately at the Buy Now price.
+            </p>
+            <button
+              onClick={onBuyNow}
+              className="w-full bg-gold text-charcoal font-bold py-3.5 rounded-xl hover:opacity-90 transition-opacity uppercase tracking-wider text-sm flex items-center justify-center gap-2"
+            >
+              <IconBag className="w-4 h-4" />
+              Buy Now — AED {buyNowPrice.toLocaleString()}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* AUTO BID section */}
       {isActive && user && userHasTicket && (
-        <div className="border border-taupe/15 rounded-xl p-4 space-y-3 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-charcoal uppercase tracking-widest">Auto Bid</span>
-            <span className="text-[9px] bg-gold/10 text-gold border border-gold/20 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">Beta</span>
-          </div>
-          <p className="text-taupe text-[11px] leading-relaxed">
-            Auto bid automatically places offers on your behalf up to your set maximum, following the increment rules.
-          </p>
+        <div className="border border-taupe/15 rounded-xl overflow-hidden mb-4">
 
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-taupe text-[10px] font-semibold uppercase tracking-wider block mb-1">Auto bid increment</label>
-              <select
-                value={autoBidIncrement}
-                onChange={e => setAutoBidIncrement(e.target.value)}
-                className="w-full bg-white border border-taupe/25 text-charcoal rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald transition-colors"
-              >
-                <option value="">Select increment</option>
-                <option value={bidIncrement}>AED {bidIncrement.toLocaleString()} (1x)</option>
-                <option value={bidIncrement * 2}>AED {(bidIncrement * 2).toLocaleString()} (2x)</option>
-                <option value={bidIncrement * 5}>AED {(bidIncrement * 5).toLocaleString()} (5x)</option>
-              </select>
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-taupe/10 bg-taupe/4">
+            <div className="flex items-center gap-2">
+              <svg className="w-3.5 h-3.5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15M14.25 3.104c.251.023.501.05.75.082M19.8 15l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.607L5 14.5m14.8.5l.186.074c.76.303 1.014 1.255.5 1.88l-.956 1.147a1.875 1.875 0 01-1.44.677H6.91a1.875 1.875 0 01-1.44-.677L4.514 16.454c-.514-.625-.26-1.577.5-1.88L5 14.5" />
+              </svg>
+              <span className="text-xs font-bold text-charcoal uppercase tracking-widest">Auto Bid</span>
             </div>
-            <div>
-              <label className="text-taupe text-[10px] font-semibold uppercase tracking-wider block mb-1">Auto bid up to</label>
-              <select
-                value={autoBidUpTo}
-                onChange={e => setAutoBidUpTo(e.target.value)}
-                className="w-full bg-white border border-taupe/25 text-charcoal rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald transition-colors"
-              >
-                <option value="">Select limit</option>
-                <option value="10">10 bids</option>
-                <option value="20">20 bids</option>
-                <option value="50">50 bids</option>
-              </select>
-            </div>
+            {autoBidConfig?.enabled && (
+              <span className="inline-flex items-center gap-1 text-[9px] bg-emerald/10 text-emerald border border-emerald/25 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 bg-emerald rounded-full animate-pulse" />
+                Active
+              </span>
+            )}
           </div>
 
-          <div>
-            <label className="text-taupe text-[10px] font-semibold uppercase tracking-wider block mb-1">Enter maximum amount AED</label>
-            <input
-              type="number"
-              value={autoBidToMax ? (maxBidAmount || '') : autoBidMax}
-              onChange={e => { if (!autoBidToMax) setAutoBidMax(e.target.value) }}
-              disabled={autoBidToMax}
-              placeholder="e.g. 5000"
-              className="w-full bg-white border border-taupe/25 text-charcoal placeholder-taupe/40 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-emerald transition-colors disabled:bg-taupe/5 disabled:cursor-not-allowed"
-            />
-          </div>
+          <div className="p-4 space-y-3">
 
-          <label className="flex items-start gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={autoBidToMax}
-              onChange={e => {
-                setAutoBidToMax(e.target.checked)
-                if (e.target.checked && maxBidAmount) setAutoBidMax(String(maxBidAmount))
-              }}
-              className="mt-0.5 accent-emerald"
-            />
-            <span className="text-taupe text-[11px] leading-relaxed group-hover:text-charcoal transition-colors">
-              Auto bid up to maximum bid amount {maxBidAmount ? `(AED ${maxBidAmount.toLocaleString()})` : ''}
-            </span>
-          </label>
+            {/* Active config summary */}
+            {autoBidConfig?.enabled && (
+              <div className="bg-emerald/6 border border-emerald/20 rounded-lg px-3 py-2.5 flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <p className="text-emerald text-[10px] font-bold uppercase tracking-wider">Currently Active</p>
+                  <p className="text-charcoal text-xs">
+                    Increment: <span className="font-semibold">AED {Number(autoBidConfig.increment).toLocaleString()}</span>
+                    <span className="text-taupe/60 mx-1.5">·</span>
+                    Max limit: <span className="font-semibold">AED {Number(autoBidConfig.maxLimit).toLocaleString()}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={onDisableAutoBid}
+                  disabled={autoBidLoading}
+                  className="text-burgundy border border-burgundy/30 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg hover:bg-burgundy/8 transition-colors flex-shrink-0 disabled:opacity-50"
+                >
+                  Disable
+                </button>
+              </div>
+            )}
 
-          <div className="bg-gold/6 border border-gold/15 rounded-lg px-3 py-2.5">
-            <p className="text-gold/80 text-[10px] leading-relaxed">
-              <IconInfo className="w-3 h-3 inline-block mr-1 align-text-bottom" />
-              Auto bid is paused when you are the current highest bidder and resumes when outbid.
+            <p className="text-taupe text-[11px] leading-relaxed">
+              The system automatically places bids on your behalf whenever you're outbid, up to your maximum limit.
             </p>
+
+            <form onSubmit={onSetupAutoBid} className="space-y-3">
+
+              {/* Starting Bid */}
+              <div>
+                <label className="text-taupe text-[10px] font-semibold uppercase tracking-wider block mb-1">
+                  Starting Bid (AED)
+                </label>
+                <input
+                  type="number"
+                  value={autoBidStart}
+                  onChange={e => setAutoBidStart(e.target.value)}
+                  placeholder={`Min AED ${minNextBid.toLocaleString()}`}
+                  min={minNextBid}
+                  className="w-full bg-white border border-taupe/25 text-charcoal placeholder-taupe/40 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-emerald transition-colors"
+                />
+                <p className="text-taupe/60 text-[10px] mt-1">System places this bid immediately when auto bid is enabled.</p>
+              </div>
+
+              {/* Increment */}
+              <div>
+                <label className="text-taupe text-[10px] font-semibold uppercase tracking-wider block mb-1">
+                  Bid Increment
+                </label>
+                <select
+                  value={autoBidIncrement}
+                  onChange={e => setAutoBidIncrement(e.target.value)}
+                  className="w-full bg-white border border-taupe/25 text-charcoal rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-emerald transition-colors"
+                >
+                  <option value="">Select increment</option>
+                  <option value={bidIncrement}>AED {bidIncrement.toLocaleString()} (1×)</option>
+                  <option value={bidIncrement * 2}>AED {(bidIncrement * 2).toLocaleString()} (2×)</option>
+                  <option value={bidIncrement * 5}>AED {(bidIncrement * 5).toLocaleString()} (5×)</option>
+                </select>
+              </div>
+
+              {/* Max limit */}
+              <div>
+                <label className="text-taupe text-[10px] font-semibold uppercase tracking-wider block mb-1">
+                  Maximum Limit (AED)
+                </label>
+                <input
+                  type="number"
+                  value={autoBidToMax ? (maxBidAmount || '') : autoBidMax}
+                  onChange={e => { if (!autoBidToMax) setAutoBidMax(e.target.value) }}
+                  disabled={autoBidToMax}
+                  placeholder="e.g. 5,000"
+                  min={minNextBid}
+                  className="w-full bg-white border border-taupe/25 text-charcoal placeholder-taupe/40 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-emerald transition-colors disabled:bg-taupe/5 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              {/* Bid up to auction max checkbox */}
+              {maxBidAmount && (
+                <label className="flex items-start gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={autoBidToMax}
+                    onChange={e => {
+                      setAutoBidToMax(e.target.checked)
+                      if (e.target.checked) setAutoBidMax(String(maxBidAmount))
+                      else setAutoBidMax('')
+                    }}
+                    className="mt-0.5 accent-emerald"
+                  />
+                  <span className="text-taupe text-[11px] leading-relaxed group-hover:text-charcoal transition-colors">
+                    Bid up to maximum allowed (AED {maxBidAmount.toLocaleString()})
+                  </span>
+                </label>
+              )}
+
+              {/* Feedback message */}
+              {autoBidMsg && (
+                <div className={`text-xs rounded-lg px-3 py-2.5 ${autoBidMsg.type === 'success' ? 'bg-emerald/10 text-emerald border border-emerald/20' : 'bg-burgundy/10 text-burgundy border border-burgundy/20'}`}>
+                  {autoBidMsg.text}
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={autoBidLoading || !autoBidIncrement || !autoBidMax}
+                className="w-full bg-charcoal text-ivory font-bold py-3 rounded-xl hover:bg-charcoal/90 disabled:opacity-50 transition-colors uppercase tracking-wider text-xs flex items-center justify-center gap-2"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15M14.25 3.104c.251.023.501.05.75.082M19.8 15l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.607L5 14.5m14.8.5l.186.074c.76.303 1.014 1.255.5 1.88l-.956 1.147a1.875 1.875 0 01-1.44.677H6.91a1.875 1.875 0 01-1.44-.677L4.514 16.454c-.514-.625-.26-1.577.5-1.88L5 14.5" />
+                </svg>
+                {autoBidLoading ? 'Saving…' : autoBidConfig?.enabled ? 'Update Auto Bid' : 'Enable Auto Bid'}
+              </button>
+            </form>
+
+            <div className="bg-gold/6 border border-gold/15 rounded-lg px-3 py-2.5">
+              <p className="text-gold/80 text-[10px] leading-relaxed">
+                <IconInfo className="w-3 h-3 inline-block mr-1 align-text-bottom" />
+                Auto bid pauses when you are the highest bidder and fires immediately when outbid.
+              </p>
+            </div>
           </div>
         </div>
       )}
@@ -1250,7 +1400,7 @@ function PendingAuctionPanel({ auction, product }) {
   const ticketTarget = auction.ticketTarget || 0
   const ticketPct    = ticketTarget > 0 ? Math.min((ticketsSold / ticketTarget) * 100, 100) : 0
   const buyNowPrice  = product.buyNowPrice ? Number(product.buyNowPrice) : null
-  const buyNowAvail  = !!(buyNowPrice && ticketPct < 50)
+  const buyNowAvail  = !!(buyNowPrice && auction.buyNowAvailable)
   const pad = n => String(n).padStart(2, '0')
 
   const countdown = useCountdown(auction.scheduledStartTime)

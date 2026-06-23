@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { fetchAuctions } from '../features/auctions/auctionsSlice'
+import { fetchFavourites } from '../features/favourites/favouritesSlice'
 import useFavourites from '../hooks/useFavourites'
 import Loader from '../components/common/Loader'
 import ProductCard from '../components/product/ProductCard'
@@ -45,6 +46,7 @@ function StatsBar({ auctions }) {
 export default function AuctionsPage() {
   const dispatch = useDispatch()
   const { items: auctions, loading } = useSelector(s => s.auctions)
+  const { user } = useSelector(s => s.auth)
   const { isFavourite, toggle: toggleFavourite } = useFavourites()
   const [filter, setFilter] = useState('ALL')
   const [sort,   setSort]   = useState('newest')
@@ -52,7 +54,10 @@ export default function AuctionsPage() {
   const [page,   setPage]   = useState(1)
   const PAGE_SIZE = 12
 
-  useEffect(() => { dispatch(fetchAuctions()) }, [dispatch])
+  useEffect(() => {
+    dispatch(fetchAuctions())
+    if (user) dispatch(fetchFavourites())
+  }, [dispatch])
   useEffect(() => { setPage(1) }, [filter, sort, search])
 
   const processed = useMemo(() => {
@@ -225,8 +230,8 @@ export default function AuctionsPage() {
                 <div key={auction.id} className="animate-card-enter h-full" style={{ animationDelay: `${(i % 8) * 0.05}s` }}>
                   <ProductCard
                     product={{ ...auction.product, auction }}
-                    isFavourite={isFavourite(auction.id)}
-                    onToggleFavourite={() => toggleFavourite(auction.id)}
+                    isFavourite={isFavourite(auction.product?.id)}
+                    onToggleFavourite={() => toggleFavourite(auction.product?.id)}
                   />
                 </div>
               ))}

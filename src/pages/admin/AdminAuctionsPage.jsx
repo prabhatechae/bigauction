@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchAuctions, activateAuction, closeAuction, fetchParticipants } from '../../features/auctions/auctionsSlice'
+import { fetchAuctions, activateAuction, closeAuction, closeAuctionWithWinner, fetchParticipants, fetchAutoBidConfigs } from '../../features/auctions/auctionsSlice'
 import Loader from '../../components/common/Loader'
 
 const STATUS_STYLE = {
@@ -12,31 +12,65 @@ const STATUS_STYLE = {
 
 function ParticipantsModal({ auctionId, onClose }) {
   const dispatch = useDispatch()
-  const { participants, loading } = useSelector(s => s.auctions)
+  const { participants, autoBidConfigs, loading } = useSelector(s => s.auctions)
 
-  useEffect(() => { dispatch(fetchParticipants(auctionId)) }, [auctionId])
+  useEffect(() => {
+    dispatch(fetchParticipants(auctionId))
+    dispatch(fetchAutoBidConfigs(auctionId))
+  }, [auctionId])
+
+  // Build a quick lookup: userId → autoBidConfig
+  const autoBidMap = Object.fromEntries((autoBidConfigs || []).map(c => [c.userId, c]))
+  const autoBidCount = (autoBidConfigs || []).length
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-almost-black/80">
-      <div className="bg-white border border-taupe/15 rounded-xl w-full max-w-md max-h-[80vh] flex flex-col p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-charcoal font-semibold">Participants</h3>
-          <button onClick={onClose} className="text-taupe hover:text-charcoal text-xl">×</button>
+      <div className="bg-white border border-taupe/15 rounded-xl w-full max-w-lg max-h-[85vh] flex flex-col">
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-taupe/10">
+          <div>
+            <h3 className="text-charcoal font-semibold">Participants</h3>
+            {!loading && autoBidCount > 0 && (
+              <p className="text-taupe text-xs mt-0.5">
+                <span className="text-gold font-semibold">{autoBidCount}</span> of {participants.length} have auto bid active
+              </p>
+            )}
+          </div>
+          <button onClick={onClose} className="text-taupe hover:text-charcoal text-xl leading-none">×</button>
         </div>
-        {loading ? <Loader text="Loading…" /> : (
-          <div className="overflow-y-auto space-y-2">
-            {participants.map((p, i) => (
-              <div key={p.userId || i} className="flex items-center justify-between py-2 border-b border-taupe/10">
-                <div>
-                  <p className="text-charcoal text-sm">{p.name}</p>
-                  <p className="text-taupe text-xs">{p.email}</p>
+
+        {loading ? <div className="p-6"><Loader text="Loading…" /></div> : (
+          <div className="overflow-y-auto flex-1">
+            {participants.length === 0 && (
+              <p className="text-taupe text-sm text-center py-8">No participants yet.</p>
+            )}
+            {participants.map((p, i) => {
+              const ab = autoBidMap[p.userId]
+              return (
+                <div key={p.userId || i} className="flex items-center justify-between px-5 py-3 border-b border-taupe/8 last:border-0">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-charcoal text-sm font-medium truncate">{p.name}</p>
+                      {ab && (
+                        <span className="inline-flex items-center gap-1 text-[9px] bg-gold/10 text-gold border border-gold/25 px-1.5 py-0.5 rounded font-bold uppercase tracking-wide flex-shrink-0">
+                          🤖 Auto
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-taupe text-xs">{p.email}</p>
+                    {ab && (
+                      <p className="text-taupe/70 text-[10px] mt-0.5">
+                        +AED {Number(ab.increment).toLocaleString()} · max AED {Number(ab.maxLimit).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-taupe text-xs flex-shrink-0 ml-3">
+                    {p.ticketPurchasedAt ? new Date(p.ticketPurchasedAt).toLocaleDateString() : '—'}
+                  </span>
                 </div>
-                <span className="text-taupe text-xs">
-                  {p.ticketPurchasedAt ? new Date(p.ticketPurchasedAt).toLocaleDateString() : '—'}
-                </span>
-              </div>
-            ))}
-            {participants.length === 0 && <p className="text-taupe text-sm text-center py-4">No participants yet.</p>}
+              )
+            })}
           </div>
         )}
       </div>
@@ -52,13 +86,20 @@ export default function AdminAuctionsPage() {
 
   useEffect(() => { dispatch(fetchAuctions()) }, [])
 
-  const onActivate = id => {
+  const onActivate = async id => {
     if (!window.confirm('Activate this auction? Bidding will begin immediately.')) return
-    dispatch(activateAuction(id))
+    const result = await dispatch(activateAuction(id))
+    if (activateAuction.rejected.match(result)) window.alert('Error: ' + result.payload)
   }
-  const onClose = id => {
-    if (!window.confirm('Force-close this auction? The highest bidder (if any) will be selected as winner and credits will be distributed.')) return
-    dispatch(closeAuction(id))
+  const onClose = async id => {
+    if (!window.confirm('Close without winner? Ticket holders will receive credits back. No winner will be declared.')) return
+    const result = await dispatch(closeAuction(id))
+    if (closeAuction.rejected.match(result)) window.alert('Error: ' + result.payload)
+  }
+  const onCloseWithWinner = async id => {
+    if (!window.confirm('Declare winner now? The current highest bidder will be marked as winner and credits distributed to losers.')) return
+    const result = await dispatch(closeAuctionWithWinner(id))
+    if (closeAuctionWithWinner.rejected.match(result)) window.alert('Error: ' + result.payload)
   }
 
   if (loading) return <Loader text="Loading auctions…" />
@@ -118,12 +159,20 @@ export default function AdminAuctionsPage() {
                         </button>
                       )}
                       {a.status === 'ACTIVE' && (
-                        <button
-                          onClick={() => onClose(a.id)}
-                          className="text-xs text-burgundy hover:underline"
-                        >
-                          Close
-                        </button>
+                        <>
+                          <button
+                            onClick={() => onCloseWithWinner(a.id)}
+                            className="text-xs text-gold hover:underline"
+                          >
+                            Declare Winner
+                          </button>
+                          <button
+                            onClick={() => onClose(a.id)}
+                            className="text-xs text-burgundy hover:underline"
+                          >
+                            Close
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>

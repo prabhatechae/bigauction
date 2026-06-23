@@ -19,6 +19,11 @@ const TYPE_CONFIG = {
     bg: 'bg-taupe',
     label: 'Auction Ended',
   },
+  AUTO_BID_MAX_REACHED: {
+    icon: '🤖',
+    bg: 'bg-gold',
+    label: 'Auto Bid Limit Reached',
+  },
 }
 
 let nextId = 1
@@ -68,13 +73,13 @@ export default function NotificationToast() {
                     Complete checkout →
                   </Link>
                 )}
-                {toast.type === 'OUTBID' && toast.auctionId && (
+                {(toast.type === 'OUTBID' || toast.type === 'AUTO_BID_MAX_REACHED') && toast.auctionId && (
                   <Link
                     to={`/auctions`}
                     className="mt-2 inline-block text-xs text-gold font-semibold hover:underline"
                     onClick={() => dismiss(toast.id)}
                   >
-                    Bid again →
+                    {toast.type === 'AUTO_BID_MAX_REACHED' ? 'Update auto bid →' : 'Bid again →'}
                   </Link>
                 )}
               </div>
